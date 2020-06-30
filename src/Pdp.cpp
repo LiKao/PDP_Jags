@@ -1,12 +1,23 @@
 #include <module/Module.h>
 
+#include "functions/Tau.hpp"
+#include "functions/MakeNetwork.hpp"
+
 namespace PDP {
-	class PDPModule : public jags::Module {
+	class PdpModule : public jags::Module {
 	public:
-		PDPModule() : jags::Module("PDP") {}
-		~PDPModule() {}
+		PdpModule() : jags::Module("Pdp") 
+		{
+			insert(new Tau);
+			insert(new MakeNetwork);
+		}
+		~PdpModule() 
+		{
+			for(auto f : functions()) 
+				delete f;
+		}
 	};
 }
 
 // Explicit instantiation of the module
-PDP::PDPModule _PDPModule;
+PDP::PdpModule _PdpModule;
