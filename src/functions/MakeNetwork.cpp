@@ -1,5 +1,7 @@
 #include "MakeNetwork.hpp"
 
+#include <iostream>
+
 namespace PDP {
 	MakeNetwork::MakeNetwork() : ArrayFunction("MakeNetwork", 1) {}
 
@@ -7,7 +9,12 @@ namespace PDP {
 			   	      		   std::vector<double const *> const &args,
             	               std::vector<std::vector<unsigned int> > const &dims ) const
 	{
-
+		const auto dim = static_cast<unsigned int>(*args[0]);
+		for(unsigned int i = 0; i < dim+1; ++i) {
+			for(unsigned int j = 0; j < dim; ++j) {
+				value[i*dim + j] = 0;
+			}
+		}
 	}
 
 	bool MakeNetwork::checkParameterDim(std::vector<std::vector<unsigned int> > const &dims) const
@@ -32,8 +39,7 @@ namespace PDP {
     {
     	return {
     		static_cast<unsigned int>(*values[0]),
-    		static_cast<unsigned int>(*values[0]) + 1
-    	};
+    		static_cast<unsigned int>(*values[0]) + 1};
     }
 
 }

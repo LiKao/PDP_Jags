@@ -3,4 +3,7 @@ target_sources(
 	PRIVATE 
 		Tau.cpp 
 		MakeNetwork.cpp
+		Link.cpp
+		BiLink.cpp
+		BiasInput.cpp
 )

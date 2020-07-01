@@ -2,6 +2,9 @@
 
 #include "functions/Tau.hpp"
 #include "functions/MakeNetwork.hpp"
+#include "functions/Link.hpp"
+#include "functions/BiLink.hpp"
+#include "functions/BiasInput.hpp"
 
 namespace PDP {
 	class PdpModule : public jags::Module {
@@ -10,6 +13,9 @@ namespace PDP {
 		{
 			insert(new Tau);
 			insert(new MakeNetwork);
+			insert(new Link);
+			insert(new BiLink);
+			insert(new BiasInput);
 		}
 		~PdpModule() 
 		{
