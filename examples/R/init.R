@@ -1,3 +1,5 @@
+### Initialization of a single network
+
 rm(list = ls())
 
 library(R2jags)
@@ -6,7 +8,7 @@ library(R2jags)
 load.module("Pdp")
 
 modelstring <- "
-model {
+data {
   # We name our nodes, so the code becomes more readable
   Cue1Node    <- 1
   Cue2Node    <- 2
@@ -19,10 +21,11 @@ model {
   val[2] <- 0.85
   val[3] <- 0.80
   val[4] <- 0.75
-
+}
+model {
   # Random network parameters
-  f ~ dnorm(0,1) T(0,)
-  c ~ dnorm(0,1) T(0,)
+  f ~ dlnorm(log(0.2),10)
+  c ~ dlnorm(log(0.01),10)
   p ~ dlnorm(log(1.5),10)
 
   net <-
@@ -30,7 +33,7 @@ model {
          BiLink(Cue2Node, Option1Node, -c, BiLink(Cue2Node, Option2Node,  c, # BiLink creates a bidirection link between two nodes
          BiLink(Cue3Node, Option1Node,  c, BiLink(Cue3Node, Option2Node, -c, # BiLink creates a bidirection link between two nodes
          BiLink(Cue4Node, Option1Node, -c, BiLink(Cue4Node, Option2Node,  c, # BiLink creates a bidirection link between two nodes
-         BiLink(Option1Node, Option2Node, f,                                 # BiLink creates a bidirection link between two nodes
+         BiLink(Option1Node, Option2Node, -f,                                # BiLink creates a bidirection link between two nodes
          BiasInput(Cue1Node, tau(val[1],p),                                  # Adds an input from Bias or GeneralActivation node
          BiasInput(Cue2Node, tau(val[2],p),                                  # Adds an input from Bias or GeneralActivation node
          BiasInput(Cue3Node, tau(val[3],p),                                  # Adds an input from Bias or GeneralActivation node

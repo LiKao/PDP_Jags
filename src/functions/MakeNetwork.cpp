@@ -1,6 +1,5 @@
 #include "MakeNetwork.hpp"
-
-#include <iostream>
+#include "helpers/JagsArray.hpp"
 
 namespace PDP {
 	MakeNetwork::MakeNetwork() : ArrayFunction("MakeNetwork", 1) {}
@@ -10,10 +9,11 @@ namespace PDP {
             	               std::vector<std::vector<unsigned int> > const &dims ) const
 	{
 		const auto dim = static_cast<unsigned int>(*args[0]);
-		for(unsigned int i = 0; i < dim+1; ++i) {
-			for(unsigned int j = 0; j < dim; ++j) {
-				value[i*dim + j] = 0;
-			}
+		for(auto arr1: JagsArray(value, {dim, dim+1})) {
+            for(auto arr2: arr1) {
+                //arr2 = 0;
+                arr2 = 0;
+            }
 		}
 	}
 

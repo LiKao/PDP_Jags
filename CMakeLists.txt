@@ -8,6 +8,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR})
 find_package(JAGS REQUIRED)
 
 include_directories(${JAGS_INCLUDE_DIRS})
+include_directories(src)
 
 ADD_LIBRARY(Pdp SHARED "")
 add_subdirectory(src)

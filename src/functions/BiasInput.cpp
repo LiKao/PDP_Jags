@@ -1,7 +1,8 @@
-#include "BiasInput.hpp"
+#include <util/dim.h>
 
-#include <iostream>
-#include <cstring>
+#include "helpers/JagsArray.hpp"
+
+#include "BiasInput.hpp"
 
 namespace PDP {
 	BiasInput::BiasInput() : ArrayFunction("BiasInput", 3) {}
@@ -10,18 +11,28 @@ namespace PDP {
 			   	      	std::vector<double const *> const &args,
             	        std::vector<std::vector<unsigned int> > const &dims ) const
 	{
-		const auto dim = dims[2][0];
-		std::memcpy(value, args[2], (dim+1)*dim*sizeof(double));
-		value[dim*dim + static_cast<size_t>(*args[0]) - 1] = *args[1];
+		auto nrv = JagsArray( value, dim(dims, args) );
+		unsigned int pos(*args[0]);
+		auto weight = JagsArray( args[1], dims[1] );
+		auto net = JagsArray( args[2], dims[2] );
+		nrv.copy( net );
+		nrv.for_each( weight, [pos,&dims](auto trg, auto w){ trg[dims[2][1]][pos] = w; }, nrv.depth() - 2 - weight.depth() );
 	}
 
 	bool BiasInput::checkParameterDim(std::vector<std::vector<unsigned int> > const &dims) const
 	{
-		return 
-			(dims[0].size() == 1) && (dims[0][0] == 1) &&
-			(dims[1].size() == 1) && (dims[1][0] == 1) &&
-			(dims[2].size() == 2) && (dims[2][0] + 1 == dims[2][1]);
+		// if we have an array of values
+		if(dims[1].size() != 1 || dims[1][0] != 1) {
+			// sizes must match, or we can't create the matrix
+			for(size_t i = 0; i < std::min(dims[2].size() - 2, dims[1].size()); ++i) {
+				if(dims[1][i] != dims[2][i+2]) {
+					return false;
+				}
+			}
+		}
 
+		return (dims[0].size() == 1) && (dims[0][0] == 1) &&
+			   (dims[2].size() >= 2) && (dims[2][0] + 1 == dims[2][1]);
 	}
 
     bool BiasInput::checkParameterValue(std::vector<double const *> const &args,
@@ -41,7 +52,18 @@ namespace PDP {
     BiasInput::dim(std::vector <std::vector<unsigned int> > const &dims,
             		 std::vector <double const *> const &values) const
     {
-    	return dims[2];
+    	// If we have a single input, the dimensions are defined by the networks
+    	if((dims[1].size() == 1) && (dims[1][0] == 1)) 
+    		return dims[2];
+
+    	// We need to identify which object has more dimensions
+    	if(dims[1].size() + 2 <= dims[2].size())
+    		return dims[2]; // Network is more complete
+
+    	// We don't yet have multiple networks, so we create them
+		std::vector<unsigned int> nrv{dims[2][0], dims[2][1]}; // First two dimensions are given by network structure
+		nrv.insert(std::end(nrv),std::begin(dims[1]),std::end(dims[1])); // Take the rest from the parameter
+		return jags::drop(nrv);
     }
 
 }
