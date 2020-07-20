@@ -13,68 +13,104 @@ namespace PDP {
 	template<typename _Algebra>
 	class Network {
 	public:
-		typedef _Algebra 							Algebra;
-		typedef typename Algebra::Scalar_type		Scalar_type;
-		typedef typename Algebra::Matrix_type		Matrix_type;
-		typedef typename Algebra::Vector_type		Vector_type;
-		typedef typename Algebra::RowVector_type	RowVector_type;
-		typedef typename Algebra::size_type			size_type;
+		typedef _Algebra 									Algebra;
+		typedef typename Algebra::scalar					scalar;
 
-		typedef Vector_type 						state_type;
+		typedef typename Algebra::matrix					matrix;
+		typedef typename Algebra::const_matrix   			const_matrix;
+		typedef typename Algebra::matrix_ref 				matrix_ref;
+		typedef typename Algebra::const_matrix_ref 			const_matrix_ref;
+
+		typedef typename Algebra::vector					vector;
+		typedef typename Algebra::const_vector 				const_vector;
+		typedef typename Algebra::vector_ref 				vector_ref;
+		typedef typename Algebra::const_vector_ref			const_vector_ref;
+
+
+		typedef typename Algebra::rowVector					rowVector;
+		typedef typename Algebra::const_rowVector			const_rowVector;
+		typedef typename Algebra::rowVector_ref				rowVector_ref;
+		typedef typename Algebra::const_rowVector_ref		const_rowVector_ref;
+
+
+		typedef typename Algebra::size_type					size_type;
+
+		typedef vector 										state_type;
+		typedef vector_ref                          		state_ref;
+		typedef const_vector_ref 							const_state_ref;
 		
-		typedef boost::numeric::odeint::runge_kutta_cash_karp54<state_type, Scalar_type, state_type, Scalar_type, Algebra>		ode_method;
-		typedef boost::numeric::odeint::controlled_runge_kutta<ode_method> 														stepper_type;
+		typedef boost::numeric::odeint::runge_kutta_dopri5<state_type, scalar, state_type, scalar, Algebra>		ode_method;
+		typedef boost::numeric::odeint::controlled_runge_kutta<ode_method> 										stepper_type;
 
-		Network(const Matrix_type & _w, const Vector_type & _v, const Scalar_type _d=0.1) :
+		Network(const_matrix_ref _w, const_vector_ref _v, const scalar _d=0.1) :
 			m_w(), m_v(), m_d(_d)
 		{
-			m_w = _w/d();
-			m_v = _v/d();
+			Algebra::noalias(m_w) = _w/d();
+			Algebra::noalias(m_v) = _v/d();
 		}
 
-		auto netin(const state_type & state) const {
-			return w_normalized() * state + v_normalized();
+		template<typename T1, typename T2>
+		void netin(const T1 & state, T2 & res) const {
+			res = w_normalized() * state + v_normalized();
 		}
 
-		state_type delta_act(const state_type & state) const {
-			const auto ni = netin( state );
-			return ni - Algebra::HProd( state, Algebra::OnesVector( nnodes() ) +  abs( Vector_type( ni ) ) );
+		template<typename T1, typename T2>
+		void delta_act(const T1 & state, T2 & dadt) const {
+			auto dadt_noalias = Algebra::noalias( dadt );
+			netin( state, dadt_noalias );
+			dadt -= Algebra::HProd( state, Algebra::addScalar( abs( dadt ), 1 ) );
+		}
+
+		template<typename T1, typename T2>
+		void astar(const T1 & state, T2 & res) const {
+			netin(state, res);
+			res = Algebra::softsign( res );
+		}
+
+		template<typename T1>
+		scalar stress(const T1 & state) const {
+			state_type target;
+			astar(state, target);
+			return Algebra::norm_inf(target - state);
 		}
 
 
-		std::vector<std::pair<Scalar_type,state_type>>
-		simulate(const state_type & init, const Scalar_type & dt=1, const Scalar_type & max_t=150) const {
-			std::vector<std::pair<Scalar_type,state_type>> nrv;
-			state_type state = init;
-			auto adapt = [this](const state_type & state, state_type & dadt, double t ) {
-				dadt = delta_act( state );
-			};
-			auto observer = [&nrv,this](const state_type &act , double t) { nrv.push_back(std::make_pair(t/d(),act)); };
-			boost::numeric::odeint::integrate_const( stepper_type(), adapt, state, 0.0, max_t*d(), dt*d(), observer );
-			return nrv;
+		template<typename T, typename Observer>
+		void simulate(T & state, Observer observer, const scalar dt=1, const scalar max_t=150) const {
+			auto adapt = [this](const auto & state, auto & dadt, scalar t ) { delta_act( state, dadt ); };
+			auto oadapt = [this,&observer](const T & act , scalar t){ observer(act, t/d()); };
+			boost::numeric::odeint::integrate_const( stepper_type(), adapt, state, 0.0, max_t*d(), dt*d(), oadapt );
 		}
 
-		      Matrix_type & w_normalized()       { return m_w; }
-		const Matrix_type & w_normalized() const { return m_w; }
-		      Vector_type & v_normalized()       { return m_v; }
-		const Vector_type & v_normalized() const { return m_v; }
+		template<typename T>
+		void simulate(T & state, const scalar dt=1, const scalar max_t=150, const scalar tol=1.0e-05) {
+			auto adapt = [this](const auto & state, auto & dadt, double t ) { delta_act( state, dadt ); };
+			auto stepper = boost::numeric::odeint::make_controlled(tol, tol, ode_method());
+			auto ode_range = boost::numeric::odeint::make_adaptive_time_range(std::ref(stepper), adapt, state, 0, max_t*d(), dt*d());
+			auto found_iter = std::find_if( ode_range.first, ode_range.second, [&tol,this](const auto & state){ return stress(state.first) < tol; } );
+		}
 
-		const Matrix_type w() const {
+		      matrix & w_normalized()       { return m_w; }
+		const matrix & w_normalized() const { return m_w; }
+		      vector & v_normalized()       { return m_v; }
+		const vector & v_normalized() const { return m_v; }
+
+		const matrix w() const {
 			return m_w*d();
 		}
 
-		const Vector_type v() const {
+		const vector v() const {
 			return m_v*d();
 		}
 
-		const Scalar_type & d()     const	{ return m_d; }
+		const scalar & d()     const	{ return m_d; }
 
-		size_type nnodes() const { return v().size(); }
+		size_type nnodes() const { return v_normalized().size(); }
 
 	private:
-		Matrix_type m_w;
-		Vector_type m_v;
-		Scalar_type m_d;
+		matrix m_w;
+		vector m_v;
+		scalar m_d;
 	};
 
 }

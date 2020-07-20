@@ -213,6 +213,18 @@ namespace PDP {
 		}*/
 
 		template<typename U, typename Func>
+		void for_each_block(const _JagsArray<U> & rhs, level_type blocksize, const Func & f)
+		{
+			if(rhs.depth() == blocksize) {
+				f(*this, rhs);
+				return;
+			}
+			for(auto arr: rhs) {
+				(*this)[arr.index()].for_each_block(arr, blocksize, f);
+			}
+		}
+
+		template<typename U, typename Func>
 		void for_each(const _JagsArray<U> & rhs, const Func & f, level_type at = 0)
 		{
 			if(at > 0) {
