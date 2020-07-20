@@ -18,7 +18,7 @@ int main(void) {
 	std::default_random_engine e1(r());
 	std::uniform_real_distribution<double> uniform_dist(0.51, 0.99);
 	std::discrete_distribution<> discrete_dist({1, 1});
-	for(int i = 0; i < runs; ++i) {
+	for(size_t i = 0; i < runs; ++i) {
 		for(int j = 0; j < 4; ++j) {
 			vals[j] = uniform_dist(e1);
 			pattern[j] = discrete_dist(e1)*2-1;

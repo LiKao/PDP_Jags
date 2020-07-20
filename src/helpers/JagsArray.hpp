@@ -99,18 +99,18 @@ namespace PDP {
 		}
 
 		_JagsArray(pointer ptr, const dim_type & dims) : 
-			m_dims(std::make_shared<dim_type>(drop(dims))), m_ptr(ptr), m_level(0), m_index(1)
+			m_level(0), m_dims(std::make_shared<dim_type>(drop(dims))), m_ptr(ptr), m_index(1)
 		{}
 
 		_JagsArray(const _JagsArray & rhs) :
-			m_dims(rhs.m_dims), m_ptr(rhs.m_ptr), m_level(rhs.m_level), m_index(rhs.m_index)
+			m_level(rhs.m_level), m_dims(rhs.m_dims), m_ptr(rhs.m_ptr), m_index(rhs.m_index)
 		{}
 		_JagsArray(_JagsArray && rhs) : 
-			m_dims(std::move(rhs.m_dims)), m_ptr(std::move(rhs.m_ptr)), m_level(rhs.m_level), m_index(rhs.m_index)
+			m_level(rhs.m_level), m_dims(std::move(rhs.m_dims)), m_ptr(std::move(rhs.m_ptr)), m_index(rhs.m_index)
 		{}
 		template<typename U = value_type>
 		_JagsArray(const _JagsArray<typename std::remove_const<typename std::enable_if<std::is_const<value_type>::value,U>::type>::type> & rhs) :
-			m_dims(rhs.m_dims), m_ptr(rhs.m_ptr), m_level(rhs.m_level), m_index(rhs.m_index)
+			m_level(rhs.m_level), m_dims(rhs.m_dims), m_ptr(rhs.m_ptr), m_index(rhs.m_index)
 		{}
 
 
