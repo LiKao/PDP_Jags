@@ -5,6 +5,7 @@
 #include "functions/Link.hpp"
 #include "functions/BiLink.hpp"
 #include "functions/BiasInput.hpp"
+#include "functions/Simulate.hpp"
 
 namespace PDP {
 	class PdpModule : public jags::Module {
@@ -16,6 +17,7 @@ namespace PDP {
 			insert(new Link);
 			insert(new BiLink);
 			insert(new BiasInput);
+			insert(new Simulate0);
 		}
 		~PdpModule() 
 		{

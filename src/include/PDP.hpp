@@ -74,20 +74,24 @@ namespace PDP {
 			return Algebra::norm_inf(target - state);
 		}
 
-
-		template<typename T, typename Observer>
-		void simulate(T & state, Observer observer, const scalar dt=1, const scalar max_t=150) const {
+		// TODO: In the current form, simulate methods only take state_type arguments
+		// Generic templated forms would take other arguments, which may be more efficient
+		// in terms of memory management. However, some Eigen types (e.g. Eigen::Map<>) seem to
+		// incorrectly handle memory allocations when returned from an odeint::iterator and therefore
+		// lead to segfaults. Therefore, we only take state_type forcing dynamic memory management
+		// here to avoid crashes.
+		template<typename Observer>
+		void simulate(state_type & state, Observer observer, const scalar dt=1, const scalar max_t=150) const {
 			auto adapt = [this](const auto & state, auto & dadt, scalar t ) { delta_act( state, dadt ); };
-			auto oadapt = [this,&observer](const T & act , scalar t){ observer(act, t/d()); };
+			auto oadapt = [this,&observer](const auto & act , scalar t){ observer(act, t/d()); };
 			boost::numeric::odeint::integrate_const( stepper_type(), adapt, state, 0.0, max_t*d(), dt*d(), oadapt );
 		}
 
-		template<typename T>
-		void simulate(T & state, const scalar dt=1, const scalar max_t=150, const scalar tol=1.0e-05) {
+		void simulate(state_type & state, const scalar dt=1, const scalar max_t=150, const scalar tol=1.0e-05) {
 			auto adapt = [this](const auto & state, auto & dadt, double t ) { delta_act( state, dadt ); };
 			auto stepper = boost::numeric::odeint::make_controlled(tol, tol, ode_method());
-			auto ode_range = boost::numeric::odeint::make_adaptive_time_range(std::ref(stepper), adapt, state, 0, max_t*d(), dt*d());
-			auto found_iter = std::find_if( ode_range.first, ode_range.second, [&tol,this](const auto & state){ return stress(state.first) < tol; } );
+			auto ode_range = boost::numeric::odeint::make_adaptive_range(std::ref(stepper), adapt, state, 0, max_t*d(), dt*d());
+			std::find_if( ode_range.first, ode_range.second, [&tol,this](const auto & state){ return stress(state) < tol; } );
 		}
 
 		      matrix & w_normalized()       { return m_w; }

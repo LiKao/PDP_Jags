@@ -6,4 +6,5 @@ target_sources(
 		Link.cpp
 		BiLink.cpp
 		BiasInput.cpp
+		Simulate.cpp
 )
