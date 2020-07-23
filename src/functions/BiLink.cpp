@@ -25,8 +25,8 @@ namespace PDP {
 		// if we have an array of values
 		if(dims[2].size() != 1 || dims[2][0] != 1) {
 			// sizes must match, or we can't create the matrix
-			for(size_t i = 0; i < std::min(dims[2].size() - 2, dims[2].size()); ++i) {
-				if(dims[2][i] != dims[2][i+2]) {
+			for(size_t i = 0; i < std::min(dims[2].size(), dims[3].size() - 2); ++i) {
+				if(dims[2][i] != dims[3][i+2]) {
 					return false;
 				}
 			}
