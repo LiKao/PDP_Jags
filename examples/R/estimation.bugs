@@ -1,0 +1,54 @@
+data {
+  # We name our nodes, so the code becomes more readable
+  Cue1Node    <- 1
+  Cue2Node    <- 2
+  Cue3Node    <- 3
+  Cue4Node    <- 4
+  Cue5Node    <- 5
+  Cue6Node    <- 6
+  OptionANode <- 7
+  OptionBNode <- 8
+
+  # Number of trials
+  DimVal <- dim(validities)
+  N.trials <- DimVal[2]
+}
+
+model {
+  # Random network parameters
+  f ~ dlnorm(log(0.01),1)
+  c ~ dlnorm(log(0.2),1)
+  p ~ dlnorm(log(1.5),1)
+  lambda ~ dlnorm(log(1),1)
+
+  # Input to option node A from cues
+  AIn <- c*ACue
+  # Input to option node B from cues
+  BIn <- c*BCue
+
+  nets <-
+         BiLink(Cue1Node, OptionANode, AIn[1,], BiLink(Cue1Node, OptionBNode, BIn[1,], # BiLink creates a bidirection link between two nodes
+         BiLink(Cue2Node, OptionANode, AIn[2,], BiLink(Cue2Node, OptionBNode, BIn[2,], # BiLink creates a bidirection link between two nodes
+         BiLink(Cue3Node, OptionANode, AIn[3,], BiLink(Cue3Node, OptionBNode, BIn[3,], # BiLink creates a bidirection link between two nodes
+         BiLink(Cue4Node, OptionANode, AIn[4,], BiLink(Cue4Node, OptionBNode, BIn[4,], # BiLink creates a bidirection link between two nodes
+         BiLink(Cue5Node, OptionANode, AIn[5,], BiLink(Cue5Node, OptionBNode, BIn[5,], # BiLink creates a bidirection link between two nodes
+         BiLink(Cue6Node, OptionANode, AIn[6,], BiLink(Cue6Node, OptionBNode, BIn[6,], # BiLink creates a bidirection link between two nodes
+         BiLink(OptionANode, OptionBNode, -f,                                # BiLink creates a bidirection link between two nodes
+         BiasInput(Cue1Node, tau(validities[1,],p),                          # Adds an input from Bias or GeneralActivation node
+         BiasInput(Cue2Node, tau(validities[2,],p),                          # Adds an input from Bias or GeneralActivation node
+         BiasInput(Cue3Node, tau(validities[3,],p),                          # Adds an input from Bias or GeneralActivation node
+         BiasInput(Cue4Node, tau(validities[4,],p),                          # Adds an input from Bias or GeneralActivation node
+         BiasInput(Cue5Node, tau(validities[5,],p),                          # Adds an input from Bias or GeneralActivation node
+         BiasInput(Cue6Node, tau(validities[6,],p),                          # Adds an input from Bias or GeneralActivation node
+         MakeNetwork(8))))))))))))))))))))                                   # Initial network to be passed to all construction function
+         # Ensure all parentheses are closed!
+
+  finact <- Simulate0(nets,0.1)
+  for(i in 1:N.trials) {
+    p.oA[i] <- exp(lambda*finact[7,i])/(exp(lambda*finact[7,i]) + exp(lambda*finact[8,i]))
+  }
+
+  for(i in 1:length(choices)) {
+    choices[i] ~ dbern(p.oA[trial[i]])
+  }
+}
