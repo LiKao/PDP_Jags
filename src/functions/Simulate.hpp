@@ -2,15 +2,10 @@
 
 #include <function/ArrayFunction.h>
 
-#include "include/EigenAlgebra.hpp"
-#include "include/PDP.hpp"
-
 namespace PDP {
 	class Simulate0 : public jags::ArrayFunction 
 	{
 	public:
-		typedef Algebra::EigenAlgebra<double> 	Algebra;
-
 		Simulate0();
 
 		void evaluate(double *value,
