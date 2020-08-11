@@ -90,8 +90,14 @@ namespace PDP {
 		void simulate(state_type & state, const scalar dt=1, const scalar max_t=150, const scalar tol=1.0e-05) {
 			auto adapt = [this](const auto & state, auto & dadt, double t ) { delta_act( state, dadt ); };
 			auto stepper = boost::numeric::odeint::make_controlled(tol, tol, ode_method());
-			auto ode_range = boost::numeric::odeint::make_adaptive_range(std::ref(stepper), adapt, state, 0, max_t*d(), dt*d());
-			std::find_if( ode_range.first, ode_range.second, [&tol,this](const auto & state){ return stress(state) < tol; } );
+			auto ode_range = boost::numeric::odeint::make_adaptive_time_range(std::ref(stepper), adapt, state, 0, max_t*d(), dt*d());
+			// If the initial stress is to low, we might terminate to early.
+			// ensure that the network actually runs first, before we determine termination.
+			bool was_stressed = false;
+			std::find_if( ode_range.first, ode_range.second, [&tol,&was_stressed, this](const auto & state){ 
+			 	was_stressed = was_stressed || (stress(state.first) > tol);
+			 	return was_stressed && (stress(state.first) < tol);
+			} );
 		}
 
 		      matrix & w_normalized()       { return m_w; }
