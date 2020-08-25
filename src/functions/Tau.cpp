@@ -3,7 +3,12 @@
 
 #include <util/dim.h>
 
-#include "helpers/JagsArray.hpp"
+#include <boost/iterator/zip_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
+
+#include "helpers/RingPointer.hpp"
+#include "helpers/MemorySection.hpp"
+
 #include "Tau.hpp"
 
 namespace PDP {
@@ -13,27 +18,27 @@ namespace PDP {
 			   	       std::vector<double const *> const &args,
             	       std::vector<std::vector<unsigned int> > const &dims ) const
 	{
-		auto val = JagsArray(args[0], {dims[0][0]});
-		auto p = JagsArray(args[1], {dims[1][0]});
-		for(auto arr1: JagsArray(value, {dims[0][0],dims[1][0]})) {
-			for(auto arr2: arr1) {
-				arr2 = std::pow(val[arr2.index()]-0.5, p[arr1.index()]);
-			}
+		auto val = MakeRingPtr(args[0], product(dims[0]));
+		auto p   = MakeRingPtr(args[1], product(dims[1]));
+		auto out = MemorySection(value, product( dim( dims, args ) ) );
+
+		for(auto & r: out) {
+			r = std::pow( *(val++), *(p++) );
 		}
 	}
 
 	bool Tau::checkParameterDim(std::vector<std::vector<unsigned int> > const &dims) const
 	{
-		return (dims[0].size() == 1) && (dims[1].size() == 1);
+		return true;
 	}
 
-    bool Tau::checkParameterValue(std::vector<double const *> const &args,
-        	                              std::vector<std::vector<unsigned int> > const &dims) const
+    bool Tau::checkParameterValue( std::vector<double const *> const &args,
+        	                       std::vector<std::vector<unsigned int> > const &dims) const
     {
 
     	return 
-    		std::all_of(args[0], args[0] + dims[0][0], [](double d){return (d >= 0) && (d <= 1); } ) &&
-    		std::all_of(args[1], args[1] + dims[1][0], [](double d){return d >= 0;});
+    		std::all_of(args[0], args[0] + product( dims[0] ), [](double d){return (d >= 0) && (d <= 1); } ) &&
+    		std::all_of(args[1], args[1] + product( dims[1] ), [](double d){return d >= 0;});
     }
 
     
@@ -41,7 +46,9 @@ namespace PDP {
     Tau::dim(std::vector <std::vector<unsigned int> > const &dims,
             		 std::vector <double const *> const &values) const
     {
-    	return jags::drop({dims[0][0], dims[1][0]});
+    	auto nrv = dims[0];
+    	nrv.insert(nrv.end(), dims[1].begin(), dims[1].end() );
+    	return jags::drop( nrv );
     }
 
 }

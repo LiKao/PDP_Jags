@@ -2,6 +2,8 @@
 #include <cmath>
 
 #include <boost/numeric/odeint.hpp>
+#include "EigenAlgebra.hpp"
+#include "helpers/Assert.hpp"
 
 namespace PDP {
 
@@ -10,10 +12,10 @@ namespace PDP {
 		return std::pow(v-T(0.5), p);
 	}
 
-	template<typename _Algebra>
+	template<Eigen::Index _size = Eigen::Dynamic>
 	class Network {
 	public:
-		typedef _Algebra 									Algebra;
+		typedef Algebra::EigenAlgebra<double,_size>			Algebra;
 		typedef typename Algebra::scalar					scalar;
 
 		typedef typename Algebra::matrix					matrix;
@@ -27,12 +29,6 @@ namespace PDP {
 		typedef typename Algebra::const_vector_ref			const_vector_ref;
 
 
-		typedef typename Algebra::rowVector					rowVector;
-		typedef typename Algebra::const_rowVector			const_rowVector;
-		typedef typename Algebra::rowVector_ref				rowVector_ref;
-		typedef typename Algebra::const_rowVector_ref		const_rowVector_ref;
-
-
 		typedef typename Algebra::size_type					size_type;
 
 		typedef vector 										state_type;
@@ -42,23 +38,24 @@ namespace PDP {
 		typedef boost::numeric::odeint::runge_kutta_dopri5<state_type, scalar, state_type, scalar, Algebra>		ode_method;
 		typedef boost::numeric::odeint::controlled_runge_kutta<ode_method> 										stepper_type;
 
-		Network(const_matrix_ref _w, const_vector_ref _v, const scalar _d=0.1) :
+		Network(const size_type nnodes = _size, const scalar _d=0.1) :
 			m_w(), m_v(), m_d(_d)
 		{
-			Algebra::noalias(m_w) = _w/d();
-			Algebra::noalias(m_v) = _v/d();
+			Assert((_size == Eigen::Dynamic) || (_size == nnodes), "Size of constant network does not match", std::invalid_argument );
+			Assert(nnodes > 0, "Negative number of nodes in network", std::invalid_argument );
+			m_w = matrix::Zero( nnodes, nnodes );
+			m_v = vector::Zero( nnodes );
 		}
 
 		template<typename T1, typename T2>
 		void netin(const T1 & state, T2 & res) const {
-			res = w_normalized() * state + v_normalized();
+			res.noalias() = w_normalized() * state + v_normalized();
 		}
 
 		template<typename T1, typename T2>
 		void delta_act(const T1 & state, T2 & dadt) const {
-			auto dadt_noalias = Algebra::noalias( dadt );
-			netin( state, dadt_noalias );
-			dadt -= Algebra::HProd( state, Algebra::addScalar( abs( dadt ), 1 ) );
+			netin( state, dadt );
+			dadt -= (state.array() * (abs( dadt ).array() + 1)).matrix();
 		}
 
 		template<typename T1, typename T2>
@@ -71,8 +68,22 @@ namespace PDP {
 		scalar stress(const T1 & state) const {
 			state_type target;
 			astar(state, target);
-			return Algebra::norm_inf(target - state);
+			return (target - state).template lpNorm<Eigen::Infinity>();
 		}
+
+		void link(size_type row, size_type column, scalar weight) {
+			m_w(row-1, column-1) = weight/d();
+		}
+
+		void biLink(size_type row, size_type column, scalar weight) {
+			link(row, column, weight);
+			link(column, row, weight);
+		}
+
+		void input(size_type row, scalar weight) {
+			m_v(row-1) = weight/d();
+		}
+
 
 		// TODO: In the current form, simulate methods only take state_type arguments
 		// Generic templated forms would take other arguments, which may be more efficient

@@ -21,6 +21,19 @@ data {
   val[2] <- 0.85
   val[3] <- 0.80
   val[4] <- 0.75
+
+  net <-
+       BiLink(1, Cue1Node, Option1Node,  BiLink(2, Cue1Node, Option2Node, # BiLink creates a bidirection link between two nodes
+       BiLink(2, Cue2Node, Option1Node,  BiLink(1, Cue2Node, Option2Node, # BiLink creates a bidirection link between two nodes
+       BiLink(1, Cue3Node, Option1Node,  BiLink(2, Cue3Node, Option2Node, # BiLink creates a bidirection link between two nodes
+       BiLink(2, Cue4Node, Option1Node,  BiLink(1, Cue4Node, Option2Node, # BiLink creates a bidirection link between two nodes
+       BiLink(3, Option1Node, Option2Node,                                # BiLink creates a bidirection link between two nodes
+       BiasInput(4, Cue1Node,                                             # Adds an input from Bias or GeneralActivation node
+       BiasInput(5, Cue2Node,                                             # Adds an input from Bias or GeneralActivation node
+       BiasInput(6, Cue3Node,                                             # Adds an input from Bias or GeneralActivation node
+       BiasInput(7, Cue4Node,                                             # Adds an input from Bias or GeneralActivation node
+       MakeNetwork(6))))))))))))))                                        # Initial network to be passed to all construction function
+       # Ensure all parentheses are closed!
 }
 model {
   # Random network parameters
@@ -28,20 +41,9 @@ model {
   c ~ dlnorm(log(0.01),10)
   p ~ dlnorm(log(1.5),10)
 
-  net <-
-         BiLink(Cue1Node, Option1Node,  c, BiLink(Cue1Node, Option2Node, -c, # BiLink creates a bidirection link between two nodes
-         BiLink(Cue2Node, Option1Node, -c, BiLink(Cue2Node, Option2Node,  c, # BiLink creates a bidirection link between two nodes
-         BiLink(Cue3Node, Option1Node,  c, BiLink(Cue3Node, Option2Node, -c, # BiLink creates a bidirection link between two nodes
-         BiLink(Cue4Node, Option1Node, -c, BiLink(Cue4Node, Option2Node,  c, # BiLink creates a bidirection link between two nodes
-         BiLink(Option1Node, Option2Node, -f,                                # BiLink creates a bidirection link between two nodes
-         BiasInput(Cue1Node, tau(val[1],p),                                  # Adds an input from Bias or GeneralActivation node
-         BiasInput(Cue2Node, tau(val[2],p),                                  # Adds an input from Bias or GeneralActivation node
-         BiasInput(Cue3Node, tau(val[3],p),                                  # Adds an input from Bias or GeneralActivation node
-         BiasInput(Cue4Node, tau(val[4],p),                                  # Adds an input from Bias or GeneralActivation node
-         MakeNetwork(6))))))))))))))                                         # Initial network to be passed to all construction function
-         # Ensure all parentheses are closed!
+  m <- Net2Mat(net, c, -c, -f, tau(val[1],p), tau(val[2],p), tau(val[3],p), tau(val[4],p) )
 }"
 
 
-jres <- jags(data=list(), model.file = textConnection(modelstring), DIC = F, parameters.to.save = c("net","f","c","p"),)
+jres <- jags(data=list(), model.file = textConnection(modelstring), DIC = F, parameters.to.save = c("f","c","p","m"),)
 jres

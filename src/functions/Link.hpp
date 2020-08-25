@@ -1,3 +1,6 @@
+#ifndef LINK_HPP
+#define LINK_HPP
+
 #include <vector>
 
 #include <function/ArrayFunction.h>
@@ -6,7 +9,7 @@ namespace PDP {
 	class Link : public jags::ArrayFunction 
 	{
 	public:
-		Link();
+		Link(const char* name, bool bidir);
 
 		void evaluate(double *value,
 			   	      std::vector<double const *> const &args,
@@ -23,5 +26,11 @@ namespace PDP {
     	dim(std::vector <std::vector<unsigned int> > const &dims,
            	std::vector <double const *> const &values) const override;
 
+        virtual bool checkParameterFixed(std::vector<bool> const &mask) const override;
+    private:
+    	bool m_bidir;
+
 	};
 }
+
+#endif // LINK_HPP

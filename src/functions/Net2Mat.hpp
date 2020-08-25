@@ -1,12 +1,15 @@
+#ifndef NET2MAT_HPP
+#define NET2MAT_HPP
+
 #include <vector>
 
 #include <function/ArrayFunction.h>
 
 namespace PDP {
-	class BiLink : public jags::ArrayFunction 
+	class Net2Mat : public jags::ArrayFunction 
 	{
 	public:
-		BiLink();
+		Net2Mat();
 
 		void evaluate(double *value,
 			   	      std::vector<double const *> const &args,
@@ -23,5 +26,8 @@ namespace PDP {
     	dim(std::vector <std::vector<unsigned int> > const &dims,
            	std::vector <double const *> const &values) const override;
 
+        virtual bool checkParameterFixed(std::vector<bool> const &mask) const override;
 	};
 }
+
+#endif // NET2MAT_HPP

@@ -1,10 +1,10 @@
 target_sources(
 	Pdp 
-	PRIVATE 
+	PRIVATE
 		Tau.cpp 
 		MakeNetwork.cpp
 		Link.cpp
-		BiLink.cpp
 		BiasInput.cpp
 		Simulate.cpp
+		Net2Mat.cpp
 )

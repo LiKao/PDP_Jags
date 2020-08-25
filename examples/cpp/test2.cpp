@@ -10,7 +10,7 @@ constexpr DVecAlgebra::size_type nnodes = 6;
 constexpr double p = 4;
 
 int main(void) {
-	double vals[4] = {0.6818182, 0.6363636, 0.6363636, 0.5909091};
+	/*double vals[4] = {0.6818182, 0.6363636, 0.6363636, 0.5909091};
 
 	auto w = DVecAlgebra::ZeroMatrix( nnodes, nnodes );
 	w <<   0.0,   0.0,   0.0,   0.0,   0.01, -0.01,
@@ -34,7 +34,7 @@ int main(void) {
 	auto observer = [&res](const auto &act , auto t) { res.push_back(std::make_pair(t,act)); };
 
 	net.simulate( init );
-	std::cout << "Final state: " << init << std::endl;
+	std::cout << "Final state: " << init << std::endl;*/
 	/*for(auto state: res) {
 		std::cout << std::get<0>(state);
 		for(int i = 0; i < std::get<1>(state).size(); ++i) {

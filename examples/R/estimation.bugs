@@ -12,6 +12,23 @@ data {
   # Number of trials
   DimVal <- dim(validities)
   N.trials <- DimVal[2]
+
+  nets <-
+       BiLink( 1, Cue1Node, OptionANode, BiLink( 2, Cue1Node, OptionBNode, # BiLink creates a bidirection link between two nodes
+       BiLink( 3, Cue2Node, OptionANode, BiLink( 4, Cue2Node, OptionBNode, # BiLink creates a bidirection link between two nodes
+       BiLink( 5, Cue3Node, OptionANode, BiLink( 6, Cue3Node, OptionBNode, # BiLink creates a bidirection link between two nodes
+       BiLink( 7, Cue4Node, OptionANode, BiLink( 8, Cue4Node, OptionBNode, # BiLink creates a bidirection link between two nodes
+       BiLink( 9, Cue5Node, OptionANode, BiLink(10, Cue5Node, OptionBNode, # BiLink creates a bidirection link between two nodes
+       BiLink(11, Cue6Node, OptionANode, BiLink(12, Cue6Node, OptionBNode, # BiLink creates a bidirection link between two nodes
+       BiLink(13, OptionANode, OptionBNode,                                # BiLink creates a bidirection link between two nodes
+       BiasInput(14, Cue1Node,                                             # Adds an input from Bias or GeneralActivation node
+       BiasInput(15, Cue2Node,                                             # Adds an input from Bias or GeneralActivation node
+       BiasInput(16, Cue3Node,                                             # Adds an input from Bias or GeneralActivation node
+       BiasInput(17, Cue4Node,                                             # Adds an input from Bias or GeneralActivation node
+       BiasInput(18, Cue5Node,                                             # Adds an input from Bias or GeneralActivation node
+       BiasInput(19, Cue6Node,                                             # Adds an input from Bias or GeneralActivation node
+       MakeNetwork(8))))))))))))))))))))                                   # Initial network to be passed to all construction function
+       # Ensure all parentheses are closed!
 }
 
 model {
@@ -26,24 +43,18 @@ model {
   # Input to option node B from cues
   BIn <- c*BCue
 
-  nets <-
-         BiLink(Cue1Node, OptionANode, AIn[1,], BiLink(Cue1Node, OptionBNode, BIn[1,], # BiLink creates a bidirection link between two nodes
-         BiLink(Cue2Node, OptionANode, AIn[2,], BiLink(Cue2Node, OptionBNode, BIn[2,], # BiLink creates a bidirection link between two nodes
-         BiLink(Cue3Node, OptionANode, AIn[3,], BiLink(Cue3Node, OptionBNode, BIn[3,], # BiLink creates a bidirection link between two nodes
-         BiLink(Cue4Node, OptionANode, AIn[4,], BiLink(Cue4Node, OptionBNode, BIn[4,], # BiLink creates a bidirection link between two nodes
-         BiLink(Cue5Node, OptionANode, AIn[5,], BiLink(Cue5Node, OptionBNode, BIn[5,], # BiLink creates a bidirection link between two nodes
-         BiLink(Cue6Node, OptionANode, AIn[6,], BiLink(Cue6Node, OptionBNode, BIn[6,], # BiLink creates a bidirection link between two nodes
-         BiLink(OptionANode, OptionBNode, -f,                                # BiLink creates a bidirection link between two nodes
-         BiasInput(Cue1Node, tau(validities[1,],p),                          # Adds an input from Bias or GeneralActivation node
-         BiasInput(Cue2Node, tau(validities[2,],p),                          # Adds an input from Bias or GeneralActivation node
-         BiasInput(Cue3Node, tau(validities[3,],p),                          # Adds an input from Bias or GeneralActivation node
-         BiasInput(Cue4Node, tau(validities[4,],p),                          # Adds an input from Bias or GeneralActivation node
-         BiasInput(Cue5Node, tau(validities[5,],p),                          # Adds an input from Bias or GeneralActivation node
-         BiasInput(Cue6Node, tau(validities[6,],p),                          # Adds an input from Bias or GeneralActivation node
-         MakeNetwork(8))))))))))))))))))))                                   # Initial network to be passed to all construction function
-         # Ensure all parentheses are closed!
+  finact <- Simulate0(
+    nets, 0.1,
+    AIn[1,], BIn[1,],
+    AIn[2,], BIn[2,],
+    AIn[3,], BIn[3,],
+    AIn[4,], BIn[4,],
+    AIn[5,], BIn[5,],
+    AIn[6,], BIn[6,],
+    -f,
+    tau(validities[1,],p), tau(validities[2,],p), tau(validities[3,],p),
+    tau(validities[4,],p), tau(validities[5,],p), tau(validities[6,],p) )
 
-  finact <- Simulate0(nets,0.1)
   for(i in 1:N.trials) {
     p.oA[i] <- exp(lambda*finact[7,i])/(exp(lambda*finact[7,i]) + exp(lambda*finact[8,i]))
   }

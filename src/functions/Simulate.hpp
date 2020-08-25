@@ -1,3 +1,6 @@
+#ifndef SIMULATE_HPP
+#define SIMULATE_HPP
+
 #include <vector>
 
 #include <function/ArrayFunction.h>
@@ -16,6 +19,8 @@ namespace PDP {
 
     	bool checkParameterValue(std::vector<double const *> const &args,
         	                     std::vector<std::vector<unsigned int> > const &dims) const override;
+
+    	bool checkParameterFixed(std::vector<bool> const &mask) const override;
    
     	std::vector<unsigned int> 
     	dim(std::vector <std::vector<unsigned int> > const &dims,
@@ -23,3 +28,5 @@ namespace PDP {
 
 	};
 }
+
+#endif // SIMULATE_HPP

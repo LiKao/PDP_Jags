@@ -4,11 +4,12 @@
 #include "include/EigenAlgebra.hpp"
 #include "include/PDP.hpp"
 
-typedef Algebra::EigenAlgebra<double> DVecAlgebra;
+typedef Algebra::EigenAlgebra<double,6> DVecAlgebra;
 
 constexpr DVecAlgebra::size_type nnodes = 6;
 constexpr double p = 1;
 constexpr size_t runs = 10000;
+//constexpr size_t runs = 1;
 
 int main(void) {
 	double vals[4];
@@ -24,33 +25,40 @@ int main(void) {
 			pattern[j] = discrete_dist(e1)*2-1;
 		}
 
-		auto w = DVecAlgebra::ZeroMatrix( nnodes, nnodes );
-		w <<   0.0,   0.0,   0.0,   0.0,  pattern[0]*0.01, -pattern[0]*0.01,
-		       0.0,   0.0,   0.0,   0.0,  pattern[1]*0.01, -pattern[1]*0.01,
-		       0.0,   0.0,   0.0,   0.0,  pattern[2]*0.01, -pattern[2]*0.01,
-	   	       0.0,   0.0,   0.0,   0.0,  pattern[3]*0.01, -pattern[3]*0.01,
-		      pattern[0]*0.01, pattern[1]*0.01,  pattern[2]*0.01,  pattern[3]*0.01,   0.0, -0.2,
-		      -pattern[0]*0.01,  -pattern[1]*0.01, -pattern[2]*0.01,  -pattern[3]*0.01,  -0.2,  0.0;
+		auto net = PDP::Network<nnodes>();
+		net.biLink( 5, 1, pattern[0]*0.01);
+		net.biLink( 5, 2, pattern[1]*0.01);
+		net.biLink( 5, 3, pattern[2]*0.01);
+		net.biLink( 5, 4, pattern[3]*0.01);
 
-		auto v = DVecAlgebra::ZeroVector( nnodes );
-		v << PDP::tau(vals[0], p), PDP::tau(vals[1], p), PDP::tau(vals[2], p), PDP::tau(vals[3], p), 0.0, 0.0;
+		net.biLink( 6, 1, -pattern[0]*0.01);
+		net.biLink( 6, 2, -pattern[1]*0.01);
+		net.biLink( 6, 3, -pattern[2]*0.01);
+		net.biLink( 6, 4, -pattern[3]*0.01);
 
-		std::cout << "W:\n" << w << std::endl << std::endl;
-		std::cout << "V:\n" << v << std::endl << std::endl;
-		auto net = PDP::Network<DVecAlgebra>( w, v );
+		net.biLink( 6, 5, -0.2 );
+
+		net.input( 1, PDP::tau(vals[0], p) );
+		net.input( 2, PDP::tau(vals[1], p) );
+		net.input( 3, PDP::tau(vals[2], p) );
+		net.input( 4, PDP::tau(vals[3], p) );
+
+		std::cout << "W:\n" << net.w() << std::endl << std::endl;
+		std::cout << "V:\n" << net.v() << std::endl << std::endl;
+		
 		auto init = DVecAlgebra::ZeroVector( nnodes );
 
-		std::vector<std::pair<PDP::Network<DVecAlgebra>::scalar,DVecAlgebra::vector>> res;
-		auto observer = [&res](const auto &act , auto t) { res.push_back(std::make_pair(t,act)); };
+		/*std::vector<std::pair<PDP::Network<DVecAlgebra>::scalar,DVecAlgebra::vector>> res;
+		auto observer = [&res](const auto &act , auto t) { res.push_back(std::make_pair(t,act)); };*/
 
-		net.simulate( init, observer );
+		net.simulate( init );
 		std::cout << "Final state: " << init << std::endl;
-		for(auto state: res) {
+		/*for(auto state: res) {
 			std::cout << std::get<0>(state);
 			for(int i = 0; i < std::get<1>(state).size(); ++i) {
 				std::cout << ";" << std::get<1>(state)[i];
 			}
 			std::cout << "\n";
-		}
+		}*/
 	}
 }

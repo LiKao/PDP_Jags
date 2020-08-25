@@ -80,6 +80,18 @@ data {
   ptrn[2,3,3] <- -1
   ptrn[2,4,3] <-  1
 
+  net <-
+     BiLink(1, Cue1Node, Option1Node,  BiLink(2, Cue1Node, Option2Node, # BiLink creates a bidirection link between two nodes
+     BiLink(3, Cue2Node, Option1Node,  BiLink(4, Cue2Node, Option2Node, # BiLink creates a bidirection link between two nodes
+     BiLink(5, Cue3Node, Option1Node,  BiLink(6, Cue3Node, Option2Node, # BiLink creates a bidirection link between two nodes
+     BiLink(7, Cue4Node, Option1Node,  BiLink(8, Cue4Node, Option2Node, # BiLink creates a bidirection link between two nodes
+     BiLink(9, Option1Node, Option2Node,                                # BiLink creates a bidirection link between two nodes
+     BiasInput(10, Cue1Node,                                             # Adds an input from Bias or GeneralActivation node
+     BiasInput(11, Cue2Node,                                             # Adds an input from Bias or GeneralActivation node
+     BiasInput(12, Cue3Node,                                             # Adds an input from Bias or GeneralActivation node
+     BiasInput(13, Cue4Node,                                             # Adds an input from Bias or GeneralActivation node
+     MakeNetwork(6))))))))))))))                                         # Initial network to be passed to all construction function
+     # Ensure all parentheses are closed!
 }
 model {
   # Two participants with different parameters
@@ -100,24 +112,20 @@ model {
     }
   }
 
-  net <-
-    BiLink(Cue1Node, Option1Node, ptrni[1,1,,], BiLink(Cue1Node, Option2Node, ptrni[2,1,,], # BiLink creates a bidirection link between two nodes
-    BiLink(Cue2Node, Option1Node, ptrni[1,2,,], BiLink(Cue2Node, Option2Node, ptrni[2,2,,], # BiLink creates a bidirection link between two nodes
-    BiLink(Cue3Node, Option1Node, ptrni[1,3,,], BiLink(Cue3Node, Option2Node, ptrni[2,3,,], # BiLink creates a bidirection link between two nodes
-    BiLink(Cue4Node, Option1Node, ptrni[1,4,,], BiLink(Cue4Node, Option2Node, ptrni[2,4,,], # BiLink creates a bidirection link between two nodes
-    BiLink(Option1Node, Option2Node, -fi,                                                   # BiLink creates a bidirection link between two nodes
-    BiasInput(Cue1Node, tau(val[1,],p),
-    BiasInput(Cue2Node, tau(val[2,],p),
-    BiasInput(Cue3Node, tau(val[3,],p),
-    BiasInput(Cue4Node, tau(val[4,],p),
-    MakeNetwork(6))))))))))))))
+  finact <- Simulate0(
+    net, 0.1,
+    ptrni[1,1,,], ptrni[2,1,,],
+    ptrni[1,2,,], ptrni[2,2,,],
+    ptrni[1,3,,], ptrni[2,3,,],
+    ptrni[1,4,,], ptrni[2,4,,],
+    -fi,
+    tau(val[1,],p), tau(val[2,],p), tau(val[3,],p), tau(val[4,],p))
 
-    finact <- Simulate0(net,0.1)
-    for(i in 1:N) {
-      for(j in 1:M) {
-        p.o1[j,i] <- exp(finact[5,j,i])/(exp(finact[5,j,i]) + exp(finact[6,j,i]))
-      }
+  for(i in 1:N) {
+    for(j in 1:M) {
+      p.o1[j,i] <- exp(finact[5,j,i])/(exp(finact[5,j,i]) + exp(finact[6,j,i]))
     }
+  }
 }"
 
 
