@@ -23,7 +23,7 @@ namespace PDP {
 		auto out = MemorySection(value, product( dim( dims, args ) ) );
 
 		for(auto & r: out) {
-			r = std::pow( *(val++), *(p++) );
+			r = std::pow( *(val++) - 0.5, *(p++) );
 		}
 	}
 
