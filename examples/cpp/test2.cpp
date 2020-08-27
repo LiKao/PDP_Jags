@@ -4,9 +4,7 @@
 #include "include/EigenAlgebra.hpp"
 #include "include/PDP.hpp"
 
-typedef Algebra::EigenAlgebra<double> DVecAlgebra;
-
-constexpr DVecAlgebra::size_type nnodes = 6;
+constexpr size_t nnodes = 6;
 constexpr double p = 4;
 
 int main(void) {

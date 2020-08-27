@@ -1,52 +1,38 @@
 #include <iostream>
 #include <random>
 
-#include "include/EigenAlgebra.hpp"
 #include "include/PDP.hpp"
 
-typedef Algebra::EigenAlgebra<double,6> DVecAlgebra;
-
-constexpr DVecAlgebra::size_type nnodes = 6;
-constexpr double p = 1;
-constexpr size_t runs = 10000;
+constexpr size_t nnodes = 8;
+constexpr double p = 1.5;
+constexpr size_t runs = 20000;
 //constexpr size_t runs = 1;
 
 int main(void) {
-	double vals[4];
-	double pattern[4];
 
 	std::random_device r;
 	std::default_random_engine e1(r());
 	std::uniform_real_distribution<double> uniform_dist(0.51, 0.99);
 	std::discrete_distribution<> discrete_dist({1, 1});
 	for(size_t i = 0; i < runs; ++i) {
-		for(int j = 0; j < 4; ++j) {
-			vals[j] = uniform_dist(e1);
-			pattern[j] = discrete_dist(e1)*2-1;
-		}
+		auto net = PDP::Network( nnodes );
 
-		auto net = PDP::Network<nnodes>();
-		net.biLink( 5, 1, pattern[0]*0.01);
-		net.biLink( 5, 2, pattern[1]*0.01);
-		net.biLink( 5, 3, pattern[2]*0.01);
-		net.biLink( 5, 4, pattern[3]*0.01);
+		for(size_t j = 1; j <= nnodes - 2; ++j) {
+			const auto p1 = discrete_dist(e1)*2-1;
+			const auto p2 = discrete_dist(e1)*2-1;
+			net.biLink( nnodes-1, j, p1*0.01);
+			net.biLink( nnodes,   j, p2*0.01);
 
-		net.biLink( 6, 1, -pattern[0]*0.01);
-		net.biLink( 6, 2, -pattern[1]*0.01);
-		net.biLink( 6, 3, -pattern[2]*0.01);
-		net.biLink( 6, 4, -pattern[3]*0.01);
-
-		net.biLink( 6, 5, -0.2 );
-
-		net.input( 1, PDP::tau(vals[0], p) );
-		net.input( 2, PDP::tau(vals[1], p) );
-		net.input( 3, PDP::tau(vals[2], p) );
-		net.input( 4, PDP::tau(vals[3], p) );
+			const auto v = uniform_dist(e1);
+			net.input( j, PDP::tau(v, p) );	
+		}		
+	
+		net.biLink( nnodes, nnodes-1, -0.2 );
 
 		std::cout << "W:\n" << net.w() << std::endl << std::endl;
 		std::cout << "V:\n" << net.v() << std::endl << std::endl;
 		
-		auto init = DVecAlgebra::ZeroVector( nnodes );
+		Eigen::VectorXd init = Eigen::VectorXd::Zero( nnodes );
 
 		/*std::vector<std::pair<PDP::Network<DVecAlgebra>::scalar,DVecAlgebra::vector>> res;
 		auto observer = [&res](const auto &act , auto t) { res.push_back(std::make_pair(t,act)); };*/

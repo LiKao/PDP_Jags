@@ -1,0 +1,22 @@
+#ifndef CONFIG_IN_HPP
+#define CONFIG_IN_HPP
+
+#cmakedefine HAVE___ATTRIBUTE__ALWAYS_INLINE
+
+#ifdef HAVE___ATTRIBUTE__ALWAYS_INLINE
+
+#define ALWAYS_INLINE inline __attribute__((always_inline))
+
+#ifndef EIGEN_STRONG_INLINE
+#define EIGEN_STRONG_INLINE ALWAYS_INLINE
+#endif  // EIGEN_STRONG_INLINE
+
+#else // HAVE___ATTRIBUTE__ALWAYS_INLINE
+
+#define ALWAYS_INLINE inline
+
+#endif // HAVE___ATTRIBUTE__ALWAYS_INLINE
+
+
+
+#endif // CONFIG_IN_HPP
