@@ -104,12 +104,6 @@ namespace Algebra {
 	        op( s1 , s2 , s3 , s4 , s5 , s6 , s7 , s8 , s9 , s10 , s11 , s12 , s13 , s14 , s15 );
 	    }
 
-
-		template<typename T>
-		static ALWAYS_INLINE auto norm_inf(const T & rhs) {
-			return rhs.template lpNorm<Eigen::Infinity>();
-		}
-
 		template< class Fac1 = double >
 		struct scale_sum1
 		{
@@ -456,7 +450,41 @@ namespace Algebra {
 		    typedef void result_type;
 		};
 
+		template<typename T>
+		class error_checker
+		{
+		public:
+			typedef T 								state;
+			typedef T 								deriv;
+		    typedef typename state::value_type 		value_type;
+
+
+		    error_checker(
+		            value_type eps_abs = static_cast< value_type >( 1.0e-6 ) ,
+		            value_type eps_rel = static_cast< value_type >( 1.0e-6 ) ,
+		            value_type a_x = static_cast< value_type >( 1 ) ,
+		            value_type a_dxdt = static_cast< value_type >( 1 ))
+		        : m_eps_abs( eps_abs ) , m_eps_rel( eps_rel ) , m_a_x( a_x ) , m_a_dxdt( a_dxdt )
+		    { }
+
+
+		    ALWAYS_INLINE value_type error( EigenAlgebra &algebra , const state &x_old , const deriv &dxdt_old , state &x_err , value_type dt ) const
+		    {
+		    	const auto toterr = abs(x_err) / (m_eps_abs + m_eps_rel * ( m_a_x * abs( x_old ) + m_a_dxdt * abs( dxdt_old ) ) );
+		        return toterr.template lpNorm<Eigen::Infinity>();
+		    }
+
+		private:
+
+		    value_type m_eps_abs;
+		    value_type m_eps_rel;
+		    value_type m_a_x;
+		    value_type m_a_dxdt;
+
+		};
+
 	};
+
 }
 
 #endif //EIGENALGEBRA_HPP
