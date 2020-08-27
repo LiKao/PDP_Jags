@@ -13,7 +13,7 @@
 #include "helpers/Assert.hpp"
 
 #ifndef PDPMAXVECTORSIZE
-#define PDPMAXVECTORSIZE 10
+#define PDPMAXVECTORSIZE 20
 #endif
 
 namespace PDP {
