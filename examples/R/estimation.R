@@ -19,10 +19,10 @@ get.samples <- function(mcmc,var,...) {
   return( mcmc[,var] )
 }
 
-n.burn   <-   5000
-n.iter   <-  20000
-n.thin   <-     8
-n.chains <-     8
+n.burn   <-   500
+n.iter   <-   2000
+n.thin   <-     1
+n.chains <-     2
 
 # Load trial data
 df.trials  <- read.csv("trials.csv")
@@ -37,10 +37,10 @@ jData <- list(
 )
 
 start <- Sys.time()
-jres <- jags.parallel(data=jData, model.file = "estimation.bugs", parameters.to.save = c("f","p","c","lambda"),
-                      n.iter = n.iter, n.burnin = n.burn, n.thin = n.thin, n.chains = n.chains,
-                      export_obj_names=c("n.iter","n.burn","n.thin","n.chains"),
-                      jags.module = c("glm","dic","Pdp"))
+jres <- jags(data=jData, model.file = "estimation.bugs", parameters.to.save = c("f","p","c","lambda"),
+                      n.iter = n.iter, n.burnin = n.burn, n.thin = n.thin, n.chains = n.chains)
+#                      export_obj_names=c("n.iter","n.burn","n.thin","n.chains"),
+#                      jags.module = c("glm","dic","Pdp"))
 jres
 end <- Sys.time()
 print(end - start)

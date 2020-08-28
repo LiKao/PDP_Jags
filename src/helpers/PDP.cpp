@@ -159,6 +159,9 @@ namespace PDP {
 		}
 	};
 
+	template<size_t nnodes> 
+	struct simulator_wrapper : simulator<nnodes> {};
+
 	template<template<size_t> class op, size_t N, size_t M = 0>
 	struct dispatcher {
 		static constexpr size_t K = (1 << N);
@@ -194,11 +197,11 @@ namespace PDP {
  	{
  		//m_w.makeCompressed();  
 		//simulator<1>::run( state, *this, dt, max_t, tol );
-		if(state.size() > PDPMAXVECTORSIZE) {
+		if(nnodes() > PDPMAXVECTORSIZE) {
 			simulator<PDPMAXVECTORSIZE+1>::run( state, *this, dt, max_t, tol );
 		}
 		else {
-			dispatcher<simulator, static_log2<PDPMAXVECTORSIZE>::value >::call( state.size(), state, *this, dt, max_t, tol );
+			dispatcher<simulator_wrapper, static_log2<PDPMAXVECTORSIZE>::value >::call( nnodes(), state, *this, dt, max_t, tol );
 		}
 	}
 

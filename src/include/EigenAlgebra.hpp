@@ -1,13 +1,13 @@
 #ifndef EIGENALGEBRA_HPP
 #define EIGENALGEBRA_HPP
 
+#include "config.h"
+
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
 #include <boost/numeric/odeint/external/eigen/eigen_algebra.hpp>
 #include <boost/numeric/odeint/algebra/default_operations.hpp>
-
-#include "config.h"
 
 namespace Algebra {
 	struct EigenAlgebra : public boost::numeric::odeint::default_operations 
