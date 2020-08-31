@@ -6,6 +6,7 @@
 #include "functions/BiasInput.hpp"
 #include "functions/Simulate.hpp"
 #include "functions/Net2Mat.hpp"
+#include "functions/LuceChc.hpp"
 
 namespace PDP {
 	class PdpModule : public jags::Module {
@@ -19,6 +20,7 @@ namespace PDP {
 			insert(new BiasInput);
 			insert(new Simulate0);
 			insert(new Net2Mat);
+			insert(new LuceChc);
 		}
 		~PdpModule() 
 		{

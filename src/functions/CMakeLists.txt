@@ -7,4 +7,5 @@ target_sources(
 		BiasInput.cpp
 		Simulate.cpp
 		Net2Mat.cpp
+		LuceChc.cpp
 )
