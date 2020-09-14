@@ -11,10 +11,7 @@
 
 #include "EigenAlgebra.hpp"
 #include "helpers/Assert.hpp"
-
-#ifndef PDPMAXVECTORSIZE
-#define PDPMAXVECTORSIZE 20
-#endif
+#include "helpers/Memory.hpp"
 
 namespace PDP {
 
@@ -70,7 +67,8 @@ namespace PDP {
 
 		template<typename T>
 		scalar ALWAYS_INLINE stress(const T & state) const noexcept {
-			T target;
+			auto * buff = reinterpret_cast<double*>( aligned_alloca(sizeof(double)*nnodes(), EIGEN_DEFAULT_ALIGN_BYTES) );
+			Eigen::Map<vector, EIGEN_DEFAULT_ALIGN_BYTES> target(buff, nnodes());
 			astar(state, target);
 			return ( target - state).template lpNorm<Eigen::Infinity>();
 		}
@@ -103,7 +101,7 @@ namespace PDP {
 			boost::numeric::odeint::integrate_const( stepper_type(), adapt, state, 0.0, max_t*d(), dt*d(), oadapt );
 		}
 
-		void simulate(state_type & state, const scalar dt=1, const scalar max_t=150, const scalar tol=1.0e-05) noexcept;
+		void simulate(Eigen::Ref<state_type> state, const scalar dt=1, const scalar max_t=150, const scalar tol=1.0e-05) noexcept;
 
 		const matrix w_normalized() const { return m_w.rightCols(nnodes()); }
 		const matrix v_normalized() const { return m_w.leftCols(1); }

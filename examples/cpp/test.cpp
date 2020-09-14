@@ -5,7 +5,7 @@
 
 constexpr size_t nnodes = 8;
 constexpr double p = 1.5;
-constexpr size_t runs = 20000;
+constexpr size_t runs = 200000;
 //constexpr size_t runs = 1;
 
 int main(void) {

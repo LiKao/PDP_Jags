@@ -93,6 +93,9 @@ namespace PDP {
 			std::move(rhs, rhs + extend(), m_buff );
 		}
 
+		pointer       get()       { return m_buff; }
+		const_pointer get() const { return m_buff; }
+
 	private:
 		const dims_type			m_dims;
 		 	  T *				m_buff;

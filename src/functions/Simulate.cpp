@@ -39,9 +39,9 @@ namespace PDP {
                     net.link(entry.row(), entry.column(), *rargs[entry.pram()-1]);
                 }
             }
-            Eigen::VectorXd state = Eigen::VectorXd::Zero( net.nnodes() );
+            Eigen::Map<Eigen::VectorXd> state(mat.get(), net.nnodes() );
+            state = Eigen::VectorXd::Zero( net.nnodes() );
             net.simulate( state );
-            mat = state.data();
             mat.next();
             std::for_each(rargs.begin(), rargs.end(), [](auto & rarg){ ++rarg; } );
         }

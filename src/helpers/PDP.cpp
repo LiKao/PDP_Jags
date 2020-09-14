@@ -1,21 +1,12 @@
 #include "config.h"
 
 #include "include/PDP.hpp"
+#include "helpers/VecDispatcher.hpp"
 
 #include <iostream>
 
 namespace PDP {
-	template<size_t N>
-	struct static_log2
-	{ 
-		static constexpr size_t value = static_log2<(N >> 1)>::value + 1;
-	};
 
-	template<>
-	struct static_log2<1>
-	{
-		static constexpr size_t value = 0;
-	};
 
 	template<>
 	struct simulator<0> {
@@ -60,14 +51,19 @@ namespace PDP {
 		template<typename T>
 		static /*ALWAYS_INLINE*/ void run ( T & state, const Network & net, const scalar dt, const scalar max_t, const scalar tol) noexcept
 		{
+			auto * buff = reinterpret_cast<double*>( aligned_alloca(sizeof(double)*net.nnodes(), EIGEN_DEFAULT_ALIGN_BYTES) );
+
+			Eigen::Map<vector,EIGEN_DEFAULT_ALIGN_BYTES> fstate(buff, net.nnodes());
+			fstate = state;
 			//auto adapt = [&net](const auto & state, auto & dadt, double t ) { net.delta_act( state, dadt ); };
 			//auto stepper = boost::numeric::odeint::make_controlled(tol, tol, Network::ode_method());
 			auto stepper = stepper_type(error_checker(tol,tol), step_adjuster(), ode_method());
-			auto ode_range = boost::numeric::odeint::make_adaptive_range(std::ref(stepper), adapt(net), state, 0, max_t*net.d(), dt*net.d());
+			auto ode_range = boost::numeric::odeint::make_adaptive_range(std::ref(stepper), adapt(net), fstate, 0, max_t*net.d(), dt*net.d());
 			// If the initial stress is to low, we might terminate to early.
 			// ensure that the network actually runs first, before we determine termination.
 			//bool was_stressed = false;
 			std::find_if( ode_range.first, ode_range.second, terminate( net, tol ) );
+			state = fstate;
 		}
 	};
 
@@ -149,60 +145,26 @@ namespace PDP {
 	};
 
 	template<size_t nnodes>
-	struct simulator<nnodes, typename std::enable_if<(nnodes > (PDPMAXVECTORSIZE))>::type> {
-		typedef Network::scalar 																				scalar;
+	struct simulator<nnodes, typename std::enable_if<(nnodes > (PDPMAXVECTORSIZE))>::type> : public simulator<0> {};
 
-		template<typename T>
-		static ALWAYS_INLINE void run ( T & state, const Network & net, const scalar dt, const scalar max_t, const scalar tol) noexcept
-		{
-			simulator<0>::run(state, net, dt, max_t, tol);
-		}
-	};
-
+	// Workaround for bug with template template parameters in CLANG
 	template<size_t nnodes> 
-	struct simulator_wrapper : simulator<nnodes> {};
+	struct simulator_wrapper : public simulator<nnodes> {};
 
-	template<template<size_t> class op, size_t N, size_t M = 0>
-	struct dispatcher {
-		static constexpr size_t K = (1 << N);
-		static constexpr size_t value = M;
-
-		template<typename ... Args>
-		static void ALWAYS_INLINE call(const size_t n, Args && ... args) {
-			if( n & K ) {
-				dispatcher<op, N-1, value+K>::call(n ^ K, std::forward<Args>(args) ... );
-			} else {
-				dispatcher<op, N-1, value>::call(n, std::forward<Args>(args) ...);
-			}
-		}
-	};
-
-	template<template<size_t> class op, size_t M>
-	struct dispatcher<op, 0, M>
-	{
-		static constexpr size_t K = 1;
-
-		template<typename ... Args>
-		static void ALWAYS_INLINE call(const size_t n, Args && ... args) {
-			if( n & K ) {
-				op<M+1>::run( std::forward<Args>(args)... );
-			} else {
-				op<M>::run( std::forward<Args>(args)... );
-			}
-		}
-	};
-
-
-	void Network::simulate(state_type & state, const scalar dt, const scalar max_t, const scalar tol) noexcept
+	void Network::simulate(Eigen::Ref<state_type> state, const scalar dt, const scalar max_t, const scalar tol) noexcept
  	{
  		//m_w.makeCompressed();  
 		//simulator<1>::run( state, *this, dt, max_t, tol );
-		if(nnodes() > PDPMAXVECTORSIZE) {
-			simulator<PDPMAXVECTORSIZE+1>::run( state, *this, dt, max_t, tol );
-		}
-		else {
-			dispatcher<simulator_wrapper, static_log2<PDPMAXVECTORSIZE>::value >::call( nnodes(), state, *this, dt, max_t, tol );
-		}
+		#ifdef PDPDONTVECTORIZE
+			simulator<0>::run( state, *this, dt, max_t, tol );
+		#else
+			if(nnodes() > PDPMAXVECTORSIZE) {
+				simulator<0>::run( state, *this, dt, max_t, tol );
+			}
+			else {
+				dispatcher<simulator_wrapper, static_log2<PDPMAXVECTORSIZE>::value >::call( nnodes(), state, *this, dt, max_t, tol );
+			}
+		#endif
 	}
 
 }

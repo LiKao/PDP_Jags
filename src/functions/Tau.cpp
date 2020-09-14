@@ -14,6 +14,7 @@
 
 #include "helpers/RingPointer.hpp"
 #include "helpers/MemorySection.hpp"
+#include "helpers/Memory.hpp"
 
 #include "Tau.hpp"
 
@@ -42,7 +43,8 @@ namespace PDP {
             auto p = MakeRingPtr(args[1],dp);
 
             Eigen::Map<const Eigen::ArrayXd> eival(args[0], dval);
-            Eigen::Map<Eigen::ArrayXd> m( reinterpret_cast<double*>( alloca( dval*sizeof(double) ) ), dval );
+            auto * const buff = reinterpret_cast<double*>( aligned_alloca( dval*sizeof(double), EIGEN_DEFAULT_ALIGN_BYTES ) );
+            Eigen::Map<Eigen::ArrayXd, EIGEN_DEFAULT_ALIGN_BYTES> m( buff, dval );
             m = eival - 0.5;
 
             Eigen::Map<Eigen::ArrayXd> eiout(value, dout);

@@ -33,8 +33,8 @@ data {
 
 model {
   # Random network parameters
-  f ~ dlnorm(log(0.01),1)
-  c ~ dlnorm(log(0.2),1)
+  f ~ dlnorm(log(0.2),1)
+  c ~ dlnorm(log(0.01),1)
   p ~ dlnorm(log(1.5),1)
   lambda ~ dlnorm(log(1),1)
 
@@ -42,6 +42,8 @@ model {
   AIn <- c*ACue
   # Input to option node B from cues
   BIn <- c*BCue
+
+  inp <- tau(validities,p)
 
   finact <- Simulate0(
     nets, 0.1,
@@ -52,14 +54,17 @@ model {
     AIn[5,], BIn[5,],
     AIn[6,], BIn[6,],
     -f,
-    tau(validities[1,],p), tau(validities[2,],p), tau(validities[3,],p),
-    tau(validities[4,],p), tau(validities[5,],p), tau(validities[6,],p) )
+    inp[1,], inp[2,], inp[3,], inp[4,], inp[5,], inp[6,] )
 
-  for(i in 1:N.trials) {
-    p.oA[i] <- exp(lambda*finact[7,i])/(exp(lambda*finact[7,i]) + exp(lambda*finact[8,i]))
-  }
+  #for(i in 1:N.trials) {
+  #  m[i] <- exp(lambda*finact[7,i])/(exp(lambda*finact[7,i]) + exp(lambda*finact[8,i]))
+  #}
+
+  p.oA <- LuceChc(OptionANode, OptionBNode, lambda, finact)
 
   for(i in 1:length(choices)) {
     choices[i] ~ dbern(p.oA[trial[i]])
   }
+
+
 }
